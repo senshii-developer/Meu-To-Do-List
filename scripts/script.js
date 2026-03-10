@@ -28,21 +28,21 @@ function addDefaultTask() {
 
 
 function editButton(task) {
-    if (document.querySelector('.edit-container')) return
+    const foundModal = document.querySelector('.modal')
+    if(foundModal) foundModal.remove()
     const taskValue = task.querySelector('span')
-    const editContainer = document.createElement('div')
-    editContainer.className = 'edit-container'
-    editContainer.innerHTML = `
-    <span>Digite a Nova Tarefa:</span>
-    <input class="new-task" placeholder:'Digite aqui...' type:'text' value=${taskValue.textContent}>
-    <button class="confirm-edit">Editar</button>`
 
-    body.appendChild(editContainer)
+    const ContentEditModal = `
+    <span>Edite sua Tarefa:</span>
+    <input class="new-task" placeholder:'Digite aqui...' type:'text' value=${taskValue.textContent}>`
+    const actionsEditModal = `<button class="confirm-edit">Editar</button>`
+
+    const modalElement = createModal('',ContentEditModal,actionsEditModal)
 
     const idFind = task.getAttribute('id')
     console.log(idFind)
-    const editButton = editContainer.querySelector('.confirm-edit')
-    const editInput = editContainer.querySelector('.new-task')
+    const editButton = modalElement.querySelector('.confirm-edit')
+    const editInput = modalElement.querySelector('.new-task')
 
     editButton.addEventListener('click', confirmEdit)
     editInput.addEventListener('keydown', (event) => {
@@ -53,25 +53,48 @@ function editButton(task) {
     })
 
     function confirmEdit() {
-        const taskText = editContainer.querySelector('input').value.trim()
+        const taskText = modalElement.querySelector('input').value.trim()
         if (taskText) {
             taskValue.textContent = taskText
             const foundTaskIndex = tasks.findIndex((task) => task.id === idFind)
             tasks[foundTaskIndex].value = taskText
             localStorage.setItem('tasks', JSON.stringify(tasks))
-            editContainer.remove()
+            modalElement.remove()
         }
     }
 }
 
 function deleteButton(task) {
+    const foundModal = document.querySelector('.modal')
+    if (foundModal) foundModal.remove()
     const editContainer = document.querySelector('.edit-container')
     const idFind = task.getAttribute('id')
-    tasks = tasks.filter((task) => task.id !== idFind)
-    localStorage.setItem('tasks', JSON.stringify(tasks))
-    task.remove()
-    if (editContainer) {
-        editContainer.remove()
+
+    const contentDeleteModal = `<span>Deseja mesmo deletar a Tarefa ${task.querySelector('span').textContent}?</span>`
+    const actionsDeleteModal = `<div class='buttons-delete-container'>
+        <button id='confirm' class="confirm-delete"><svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24">
+	        <path fill="#4B352A" d="m23.15 5.4l-2.8-2.8a.5.5 0 0 0-.7 0L7.85 14.4a.5.5 0 0 1-.7 0l-2.8-2.8a.5.5 0 0 0-.7 0l-2.8 2.8a.5.5 0 0 0 0 .7l6.3 6.3a.5.5 0 0 0 .7 0l15.3-15.3a.5.5 0 0 0 0-.7" />
+            </svg></button>
+        <button id='cancel' class="confirm-delete"><svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24">
+	        <path fill="#4B352A" d="M20 6.91L17.09 4L12 9.09L6.91 4L4 6.91L9.09 12L4 17.09L6.91 20L12 14.91L17.09 20L20 17.09L14.91 12z" />
+            </svg></button>
+    </div>`
+
+    const modalElement = createModal('',contentDeleteModal,actionsDeleteModal)
+
+    const confirmButton = document.querySelector('#confirm')
+    const cancelButton = document.querySelector('#cancel')
+
+    confirmButton.addEventListener('click', confirmDelete)
+    cancelButton.addEventListener('click', () => {
+        modalElement.remove()
+    })
+
+    function confirmDelete() {
+        tasks = tasks.filter((task) => task.id !== idFind)
+        localStorage.setItem('tasks', JSON.stringify(tasks))
+        task.remove()
+        modalElement.remove()
     }
 }
 
@@ -88,7 +111,7 @@ function addTask(id, value, newTask) {
     const listItem = document.createElement('li')
     listItem.className = "list-item"
     listItem.setAttribute('id', id)
-
+    
     listItem.innerHTML = `
     <span>${value}</span>
     <div class="button-container">
@@ -117,4 +140,42 @@ function addTask(id, value, newTask) {
 
     listItem.querySelector('.edit-button').addEventListener("click", () => editButton(listItem))
     listItem.querySelector('.delete-button').addEventListener("click", () => deleteButton(listItem))
+}
+
+function dateTask() {
+    const dateContainer = document.createElement('div')
+    dateContainer.className='date-container'
+
+    const dateRequest = document.createElement('span')
+    dateRequest.className ='date-request'
+    const inputDate = document.createElement('input')
+    inputDate.setAttribute('type','date')
+    inputDate.className ='input-date'
+
+    dateContainer.append(dateRequest,inputDate)
+
+    body.appendChild(dateContainer)
+}
+
+function createModal(header,content,actions) {
+    const modalElement = document.createElement('div')
+    modalElement.className = 'modal'
+
+    modalElement.innerHTML=`
+    <div class='modal-backdrop'></div>
+    <div class='modal-body'>
+        <div class='header>
+            ${header}
+        </div>
+        <div class='content'>
+            ${content}
+        </div>
+        <div class='actions'>
+            ${actions}
+        </div>
+    </div>
+    `
+
+    body.appendChild(modalElement)
+    return modalElement
 }
