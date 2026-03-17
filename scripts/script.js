@@ -9,38 +9,39 @@ function idGenerator() {
     return Date.now()
 }
 
-addButton.addEventListener('click', addDefaultTask)
+addButton.addEventListener('click', dateTask)
 inputTask.addEventListener('keydown', (event) => {
     const keyName = event.key
     console.log(keyName)
     if (keyName === 'Enter') {
-        addDefaultTask()
+        dateTask()
     }
 })
 
-function addDefaultTask() {
+function addDefaultTask(date) {
     const nowTask = idGenerator()
     const inputValue = inputTask.value.trim()
     if (inputValue) {
-        addTask(nowTask, inputValue, true)
+        addTask(nowTask, inputValue, true, date)
     }
 }
-
 
 function editButton(task) {
     const foundModal = document.querySelector('.modal')
     if(foundModal) foundModal.remove()
-    const taskValue = task.querySelector('span')
+    const taskValue = task.querySelector('#taskinfo')
+    const taskDate = task.querySelector('#dateinfo')
+    const idFind = task.getAttribute('id')
+    const currentTask = tasks.find((item) => item.id === idFind )
 
+    const HeadereditModal = `<span>Edite sua Tarefa:</span>`
     const ContentEditModal = `
-    <span>Edite sua Tarefa:</span>
-    <input class="new-task" placeholder:'Digite aqui...' type:'text' value=${taskValue.textContent}>`
+    <input id='edittext' 'class="new-task" placeholder:'Digite aqui...' type:'text' value=${taskValue.textContent}>
+    <input id='editdate' class='new-task' type='date' value='${currentTask.date}'>` 
     const actionsEditModal = `<button class="confirm-edit">Editar</button>`
 
-    const modalElement = createModal('',ContentEditModal,actionsEditModal)
+    const modalElement = createModal(HeadereditModal,ContentEditModal,actionsEditModal)
 
-    const idFind = task.getAttribute('id')
-    console.log(idFind)
     const editButton = modalElement.querySelector('.confirm-edit')
     const editInput = modalElement.querySelector('.new-task')
 
@@ -53,11 +54,14 @@ function editButton(task) {
     })
 
     function confirmEdit() {
-        const taskText = modalElement.querySelector('input').value.trim()
+        const taskText = modalElement.querySelector('#edittext').value.trim()
+        const newTaskDate = modalElement.querySelector('#editdate').value
         if (taskText) {
             taskValue.textContent = taskText
+            taskDate.textContent = Intl.DateTimeFormat("pt-BR").format(new Date(newTaskDate + 'T00:00'))
             const foundTaskIndex = tasks.findIndex((task) => task.id === idFind)
             tasks[foundTaskIndex].value = taskText
+            tasks[foundTaskIndex].date = newTaskDate
             localStorage.setItem('tasks', JSON.stringify(tasks))
             modalElement.remove()
         }
@@ -67,7 +71,6 @@ function editButton(task) {
 function deleteButton(task) {
     const foundModal = document.querySelector('.modal')
     if (foundModal) foundModal.remove()
-    const editContainer = document.querySelector('.edit-container')
     const idFind = task.getAttribute('id')
 
     const contentDeleteModal = `<span>Deseja mesmo deletar a Tarefa ${task.querySelector('span').textContent}?</span>`
@@ -102,18 +105,17 @@ tasks.forEach((task) => {
     const idTask = task.id
     const valueTask = task.value
 
-    addTask(idTask, valueTask)
+    addTask(idTask, valueTask,false,task.date)
 })
 
-
-
-function addTask(id, value, newTask) {
+function addTask(id, value, newTask,dateTask) {
     const listItem = document.createElement('li')
     listItem.className = "list-item"
     listItem.setAttribute('id', id)
-    
+    console.log(dateTask)
     listItem.innerHTML = `
-    <span>${value}</span>
+    <span id='taskinfo'>${value}</span>
+    <span id='dateinfo'>${Intl.DateTimeFormat("pt-BR").format(new Date(dateTask + 'T00:00'))}</span>
     <div class="button-container">
         <button class="edit-button">
         <svg xmlns="http://www.w3.org/2000/svg" width="15px" height="15px" viewBox="0 0 24 24">
@@ -133,7 +135,8 @@ function addTask(id, value, newTask) {
         inputTask.value = ''
         tasks.push({
             id: id.toString(),
-            value: value
+            value: value,
+            date: dateTask
         })
         localStorage.setItem('tasks', JSON.stringify(tasks))
     }
@@ -143,18 +146,20 @@ function addTask(id, value, newTask) {
 }
 
 function dateTask() {
-    const dateContainer = document.createElement('div')
-    dateContainer.className='date-container'
+    const headerDateModal = `<span>Selecione a Data de Entrega/Realização da Tarefa:</span>`
+    const contentDateModal = `<input class='input-date' type='date' value='${Intl.DateTimeFormat('en-CA').format()}'>`
+    const actionDateModal = `<button id='date-button'>Adicionar Tarefa</button>`
+    if(!inputTask.value) return 
+    const modalElement = createModal(headerDateModal,contentDateModal,actionDateModal)
 
-    const dateRequest = document.createElement('span')
-    dateRequest.className ='date-request'
-    const inputDate = document.createElement('input')
-    inputDate.setAttribute('type','date')
-    inputDate.className ='input-date'
+    const dateButton = modalElement.querySelector('button')
+    const inputDate = modalElement.querySelector('input')
 
-    dateContainer.append(dateRequest,inputDate)
-
-    body.appendChild(dateContainer)
+    dateButton.addEventListener('click', () => {
+        if(!inputDate.value) return
+        addDefaultTask(inputDate.value)
+        modalElement.remove()
+    })
 }
 
 function createModal(header,content,actions) {
@@ -164,7 +169,7 @@ function createModal(header,content,actions) {
     modalElement.innerHTML=`
     <div class='modal-backdrop'></div>
     <div class='modal-body'>
-        <div class='header>
+        <div class='header'>
             ${header}
         </div>
         <div class='content'>
@@ -179,3 +184,4 @@ function createModal(header,content,actions) {
     body.appendChild(modalElement)
     return modalElement
 }
+

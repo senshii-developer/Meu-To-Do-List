@@ -190,6 +190,10 @@
             filter: brightness(1.2);
         }
     }
+
+    & input {
+        cursor: pointer;
+    }
 }
 
 .buttons-delete-container{
